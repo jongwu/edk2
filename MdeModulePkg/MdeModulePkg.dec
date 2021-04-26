@@ -910,6 +910,13 @@
   # @Expression 0x80000001 | (gEfiMdeModulePkgTokenSpaceGuid.PcdLoadModuleAtFixAddressEnable == 0xFFFFFFFFFFFFFFFF || gEfiMdeModulePkgTokenSpaceGuid.PcdLoadModuleAtFixAddressEnable <= 0x0FFFFFFFFFFFFFFF)
   gEfiMdeModulePkgTokenSpaceGuid.PcdLoadModuleAtFixAddressEnable|0|UINT64|0x30001015
 
+  ##
+  # This is the physical address of rsdp which is the core struct of Acpi.
+  # Some hypervisor may has no way to pass rsdp address to the guest, so a PCD
+  # is worth for those.
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiRsdpBaseAddress|0x0|UINT64|0x30001056
+
   ## Progress Code for OS Loader LoadImage start.<BR><BR>
   #  PROGRESS_CODE_OS_LOADER_LOAD   = (EFI_SOFTWARE_DXE_BS_DRIVER | (EFI_OEM_SPECIFIC | 0x00000000)) = 0x03058000<BR>
   # @Prompt Progress Code for OS Loader LoadImage start.
