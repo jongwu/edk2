@@ -37,6 +37,7 @@
   # Virtio Support
   VirtioLib|OvmfPkg/Library/VirtioLib/VirtioLib.inf
   VirtioMmioDeviceLib|OvmfPkg/Library/VirtioMmioDeviceLib/VirtioMmioDeviceLib.inf
+  QemuFwCfgLib|OvmfPkg/Library/QemuFwCfgLib/QemuFwCfgLibMmio.inf
 
   ArmPlatformLib|ArmPlatformPkg/Library/ArmPlatformLibNull/ArmPlatformLibNull.inf
 
@@ -195,6 +196,13 @@
 
   gEfiMdePkgTokenSpaceGuid.PcdPciIoTranslation|0
 
+  #
+  # SMBIOS entry point version
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0300
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosDocRev|0x0
+  gUefiOvmfPkgTokenSpaceGuid.PcdQemuSmbiosValidated|FALSE
+
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0x0
 
 [PcdsDynamicHii]
@@ -336,6 +344,15 @@
   #
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
+
+  #
+  # SMBIOS Support
+  #
+  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf {
+    <LibraryClasses>
+      NULL|OvmfPkg/Library/SmbiosVersionLib/DetectSmbiosVersionLib.inf
+  }
+  OvmfPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 
   #
   # PCI support
