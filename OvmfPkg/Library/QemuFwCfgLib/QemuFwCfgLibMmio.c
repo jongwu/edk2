@@ -115,13 +115,13 @@ QemuFwCfgInitialize (
   UINT64               FwCfgDmaAddress;
   UINT64               FwCfgDmaSize;
 
+  DEBUG ((DEBUG_INFO, "---------- QemuFwCfgInitialize: find qemu fw_cfg ---------\n"));
   Status = gBS->LocateProtocol (
                   &gFdtClientProtocolGuid,
                   NULL,
                   (VOID **)&FdtClient
                   );
   ASSERT_EFI_ERROR (Status);
-
   Status = FdtClient->FindCompatibleNodeReg (
                         FdtClient,
                         "qemu,fw-cfg-mmio",
@@ -167,7 +167,7 @@ QemuFwCfgInitialize (
 
   DEBUG ((
     DEBUG_INFO,
-    "Found FwCfg @ 0x%Lx/0x%Lx\n",
+    "------------- Found FwCfg @ 0x%Lx/0x%Lx --------------\n",
     FwCfgSelectorAddress,
     FwCfgDataAddress
     ));
@@ -191,7 +191,9 @@ QemuFwCfgInitialize (
 
     QemuFwCfgSelectItem (QemuFwCfgItemSignature);
     Signature = QemuFwCfgRead32 ();
+    DEBUG((DEBUG_INFO, "--------- QemuFwCfgInitialize: Signature is 0x%x, mFwCfgDataAddress is %lx ---------\n", Signature, mFwCfgDataAddress));
     if (Signature == SIGNATURE_32 ('Q', 'E', 'M', 'U')) {
+       DEBUG((DEBUG_INFO, "--------- QemuFwCfgInitialize: fwcfg is available -----------\n"));
       //
       // For DMA support, we require the DTB to advertise the register, and the
       // feature bitmap (which we read without DMA) to confirm the feature.
@@ -202,6 +204,7 @@ QemuFwCfgInitialize (
         QemuFwCfgSelectItem (QemuFwCfgItemInterfaceVersion);
         Features = QemuFwCfgRead32 ();
         if ((Features & FW_CFG_F_DMA) != 0) {
+          DEBUG((DEBUG_INFO, "--------- QemuFwCfgInitialize: FW_CFG_F_DMA is enabled --------\n"));
           mFwCfgDmaAddress            = FwCfgDmaAddress;
           InternalQemuFwCfgReadBytes  = DmaReadBytes;
           InternalQemuFwCfgWriteBytes = DmaWriteBytes;
@@ -214,6 +217,7 @@ QemuFwCfgInitialize (
     }
   }
 
+  DEBUG((DEBUG_INFO, "--------- QemuFwCfgInitialize: return success ----------\n"));
   return RETURN_SUCCESS;
 }
 
@@ -257,7 +261,7 @@ MmioReadBytes (
  #else
   Left = Size & 3;
  #endif
-
+ DEBUG((DEBUG_INFO, "--------- MmioReadBytes: size is %u ----------\n", Size));
   Size -= Left;
   Ptr   = Buffer;
   End   = Ptr + Size;
@@ -289,6 +293,7 @@ MmioReadBytes (
   if (Left & 1) {
     *Ptr = MmioRead8 (mFwCfgDataAddress);
   }
+ DEBUG((DEBUG_INFO, "--------- MmioReadBytes: will return ----------\n", Size));
 }
 
 /**

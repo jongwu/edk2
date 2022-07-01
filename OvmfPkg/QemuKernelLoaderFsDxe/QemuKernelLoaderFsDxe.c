@@ -309,6 +309,7 @@ ConvertKernelBlobTypeToFileInfo (
   CopyMem (&FileInfo->ModificationTime, &mInitTime, sizeof mInitTime);
   CopyMem (FileInfo->FileName, Name, NameSize);
 
+  DEBUG((DEBUG_INFO, "---------- ConvertKernelBlobTypeToFileInfo: BufferSize is %lu --------\n", FileSize));
   return EFI_SUCCESS;
 }
 
@@ -964,6 +965,8 @@ FetchBlob (
   // Read blob.
   //
   Blob->Data = AllocatePool (Blob->Size);
+  ZeroMem(Blob->Data, Blob->Size);
+  DEBUG((DEBUG_INFO, "-------%a: allocate buff at %x for loading kernel --------\n", __FUNCTION__, Blob->Data));
   if (Blob->Data == NULL) {
     DEBUG ((
       DEBUG_ERROR,
@@ -989,6 +992,7 @@ FetchBlob (
       break;
     }
 
+    DEBUG((DEBUG_INFO, "---------- FetchBlob: Blob->FwCfgItem[%d].DataKey is %u --------\n", Idx, Blob->FwCfgItem[Idx].DataKey));
     QemuFwCfgSelectItem (Blob->FwCfgItem[Idx].DataKey);
 
     Left = Blob->FwCfgItem[Idx].Size;
@@ -1045,6 +1049,7 @@ QemuKernelLoaderFsDxeEntrypoint (
   EFI_HANDLE   FileSystemHandle;
   EFI_HANDLE   InitrdLoadFile2Handle;
 
+  DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: ----------\n"));
   if (!QemuFwCfgIsAvailable ()) {
     return EFI_NOT_FOUND;
   }
@@ -1073,7 +1078,6 @@ QemuKernelLoaderFsDxeEntrypoint (
     if (EFI_ERROR (Status)) {
       goto FreeBlobs;
     }
-
     mTotalBlobBytes += CurrentBlob->Size;
   }
 

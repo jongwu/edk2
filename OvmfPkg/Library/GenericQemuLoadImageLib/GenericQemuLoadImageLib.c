@@ -82,6 +82,7 @@ GetQemuKernelLoaderBlobSize (
   EFI_FILE_HANDLE  FileHandle;
   UINT64           FileSize;
 
+DEBUG((DEBUG_INFO, "--------- GetQemuKernelLoaderBlobSize: FileName is %s ---------\n", FileName));
   Status = Root->Open (Root, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -175,6 +176,7 @@ QemuLoadKernelImage (
   CHAR8                            *CommandLine;
   UINTN                            InitrdSize;
 
+  DEBUG((DEBUG_INFO, "--------- QemuLoadKernelImage: -----------\n"));
   //
   // Load the image. This should call back into the QEMU EFI loader file system.
   //
@@ -338,6 +340,7 @@ QemuLoadKernelImage (
   *ImageHandle = KernelImageHandle;
   Status       = EFI_SUCCESS;
 
+
 FreeCommandLine:
   if (CommandLineSize > 0) {
     FreePool (CommandLine);
@@ -350,6 +353,7 @@ UnloadImage:
     gBS->UnloadImage (KernelImageHandle);
   }
 
+  DEBUG((DEBUG_INFO, "---------- QemuLoadKernelImage: end of it, status is %d ----------\n", Status));
   return Status;
 }
 
@@ -374,6 +378,7 @@ QemuStartKernelImage (
   IN  OUT EFI_HANDLE  *ImageHandle
   )
 {
+  DEBUG((DEBUG_INFO, "---------- QemuStartKernelImage -----------\n"));
   return gBS->StartImage (
                 *ImageHandle,
                 NULL,              // ExitDataSize
