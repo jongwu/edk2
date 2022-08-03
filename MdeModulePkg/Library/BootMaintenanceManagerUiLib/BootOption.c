@@ -507,6 +507,7 @@ BOpt_FindDrivers (
   SimpleFs = NULL;
   LoadFile = NULL;
 
+  DEBUG((DEBUG_INFO, "-------- BOpt_FindDrivers ----------\n"));
   InitializeListHead (&DriverMenu.Head);
 
   //

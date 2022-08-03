@@ -124,6 +124,7 @@ QueueImage (
 {
   DEFERRED_3RD_PARTY_IMAGE_INFO  *ImageInfo;
 
+  DEBUG((DEBUG_INFO, "--------- QueueImage: device path is %s ---------\n", ImageDevicePath));
   //
   // Expand memory for the new deferred image.
   //
@@ -329,6 +330,7 @@ Defer3rdPartyImageLoad (
     return EFI_SUCCESS;
   }
 
+  DEBUG((DEBUG_INFO, "--------- Defer3rdPartyImageLoad: before LookupImage --------\n"));
   ImageInfo = LookupImage (File, BootPolicy);
 
   DEBUG_CODE_BEGIN ();

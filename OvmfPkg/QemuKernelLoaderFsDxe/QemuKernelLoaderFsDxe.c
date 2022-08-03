@@ -933,7 +933,7 @@ STATIC CONST EFI_LOAD_FILE2_PROTOCOL  mInitrdLoadFile2 = {
 
   @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for Blob->Data.
 **/
-STATIC
+/*STATIC
 EFI_STATUS
 FetchBlob (
   IN OUT KERNEL_BLOB  *Blob
@@ -1017,7 +1017,19 @@ FetchBlob (
 
   return EFI_SUCCESS;
 }
+*/
+STATIC
+EFI_STATUS
+FetchKernelBlob (
+IN OUT KERNEL_BLOB  *Blob
+  )
+{
 
+  Blob->Size = 21547520;
+  Blob->Data = (UINT8 *) 0xf8000000;
+
+  return EFI_SUCCESS;
+}
 //
 // The entry point of the feature.
 //
@@ -1050,10 +1062,10 @@ QemuKernelLoaderFsDxeEntrypoint (
   EFI_HANDLE   InitrdLoadFile2Handle;
 
   DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: ----------\n"));
-  if (!QemuFwCfgIsAvailable ()) {
+/*  if (!QemuFwCfgIsAvailable ()) {
     return EFI_NOT_FOUND;
   }
-
+*/
   Status = gRT->GetTime (&mInitTime, NULL /* Capabilities */);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: GetTime(): %r\n", __FUNCTION__, Status));
@@ -1064,8 +1076,9 @@ QemuKernelLoaderFsDxeEntrypoint (
   // Fetch all blobs.
   //
   for (BlobType = 0; BlobType < KernelBlobTypeMax; ++BlobType) {
+    if (BlobType != KernelBlobTypeKernel) continue;
     CurrentBlob = &mKernelBlob[BlobType];
-    Status      = FetchBlob (CurrentBlob);
+    Status      = FetchKernelBlob (CurrentBlob);
     if (EFI_ERROR (Status)) {
       goto FreeBlobs;
     }
@@ -1079,6 +1092,7 @@ QemuKernelLoaderFsDxeEntrypoint (
       goto FreeBlobs;
     }
     mTotalBlobBytes += CurrentBlob->Size;
+    DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: CurrentBlob->name is %s, CurrentBlob->Data is %p --------\n", CurrentBlob->Name, CurrentBlob->Data));
   }
 
   KernelBlob = &mKernelBlob[KernelBlobTypeKernel];
@@ -1092,6 +1106,7 @@ QemuKernelLoaderFsDxeEntrypoint (
   // Create a new handle with a single VenMedia() node device path protocol on
   // it, plus a custom SimpleFileSystem protocol on it.
   //
+  DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: will install mFileSystemDevicePath ----------\n"));
   FileSystemHandle = NULL;
   Status           = gBS->InstallMultipleProtocolInterfaces (
                             &FileSystemHandle,
