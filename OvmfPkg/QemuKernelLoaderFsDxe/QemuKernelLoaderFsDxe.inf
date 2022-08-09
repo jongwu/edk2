@@ -20,7 +20,9 @@
   QemuKernelLoaderFsDxe.c
 
 [Packages]
+  ArmVirtPkg/ArmVirtPkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
   OvmfPkg/OvmfPkg.dec
 
@@ -29,7 +31,9 @@
   BaseMemoryLib
   DebugLib
   DevicePathLib
+  FdtLib
   MemoryAllocationLib
+  PcdLib
   QemuFwCfgLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -48,3 +52,6 @@
 
 [Depex]
   gEfiRealTimeClockArchProtocolGuid
+
+[FixedPcd]
+  gArmVirtTokenSpaceGuid.PcdDeviceTreeInitialBaseAddress

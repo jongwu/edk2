@@ -109,14 +109,14 @@ CloudHvVirtMemInfoPeiLibConstructor (
         CloudHvMemNode[Index].Size = CurSize;
         Index++;
         // We should build Hob seperately for the memory node except the first one
-        if (CurBase != MemBase) {
+/*        if (CurBase != MemBase) {
           BuildResourceDescriptorHob (
             EFI_RESOURCE_SYSTEM_MEMORY,
             ResourceAttributes,
             CurBase,
             CurSize
             );
-        }
+        }*/
         if (Index >= CLOUDHV_MAX_MEM_NODE_NUM) {
           DEBUG ((
             DEBUG_WARN,

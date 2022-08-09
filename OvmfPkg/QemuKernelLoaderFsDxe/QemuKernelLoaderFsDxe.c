@@ -7,9 +7,10 @@
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
-
+#include <PiPei.h>
 #include <PiDxe.h>
 
+#include <libfdt.h>
 #include <Guid/FileInfo.h>
 #include <Guid/FileSystemInfo.h>
 #include <Guid/FileSystemVolumeLabelInfo.h>
@@ -26,8 +27,10 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/LoadFile2.h>
+#include <Library/PcdLib.h>
 #include <Protocol/SimpleFileSystem.h>
 
+#include<Library/PrePiLib.h>
 //
 // Static data that hosts the fw_cfg blobs and serves file requests.
 //
@@ -1024,12 +1027,102 @@ FetchKernelBlob (
 IN OUT KERNEL_BLOB  *Blob
   )
 {
+  VOID           *DeviceTreeBase;
+  UINT64         InitrdStart, InitrdEnd;
+  INT32          Len;
+  CONST UINT64   *Prop;
+  INT32        ChosenNode;
 
-  Blob->Size = 21547520;
-  Blob->Data = (UINT8 *) 0xf8000000;
+  
+  DEBUG((DEBUG_INFO, "-------- %a: begin ----------\n", __FUNCTION__));
+  DeviceTreeBase = (VOID *)(UINTN)PcdGet64 (PcdDeviceTreeInitialBaseAddress);
+  ASSERT (DeviceTreeBase != NULL);
+
+  Blob->Size = 0;
+
+  //
+  // Make sure we have a valid device tree blob
+  //
+  ASSERT (fdt_check_header (DeviceTreeBase) == 0);
+
+/*  for (Prev = 0; ; Prev = Node) {
+    Node = fdt_next_node (DeviceTreeBase, Prev, NULL);
+    if (Node < 0) {
+      break;
+    }
+*/
+    //
+    // Find chosen node
+    //
+  DEBUG((DEBUG_INFO, "-------- %a: before find chosen node ----------\n", __FUNCTION__));
+    ChosenNode = fdt_path_offset (DeviceTreeBase, "/chosen");
+    if (ChosenNode < 0) {
+      return EFI_NOT_FOUND;
+    }
+
+  DEBUG((DEBUG_INFO, "-------- %a: before switch: Blob name is %s ----------\n", __FUNCTION__, Blob->Name));
+    switch (Blob->Name[0]) {
+      case 'k':
+        Prop = fdt_getprop (DeviceTreeBase, ChosenNode, "linux,kernel-start", &Len);
+        if ((Prop == NULL) || (Len < 0)) {
+          return EFI_SUCCESS;
+        }
+        Blob->Data = (UINT8 *) fdt64_to_cpu (ReadUnaligned64 (Prop));
+        Prop = fdt_getprop (DeviceTreeBase, ChosenNode, "linux,kernel-size", &Len);
+        if ((Prop == NULL) || (Len < 0)) {
+          return EFI_SUCCESS;
+        }
+        Blob->Size = fdt64_to_cpu (ReadUnaligned64 (Prop));
+        break;
+      case 'i':
+        Prop = fdt_getprop (DeviceTreeBase, ChosenNode, "linux,initrd-start", &Len);
+        if ((Prop == NULL) || (Len < 0)) {
+          return EFI_SUCCESS;
+        }
+        InitrdStart = fdt64_to_cpu (ReadUnaligned64 (Prop));
+        Blob->Data = (UINT8 *) InitrdStart;
+        Prop = fdt_getprop (DeviceTreeBase, ChosenNode, "linux,initrd-end", &Len);
+        if ((Prop == NULL) || (Len < 0)) {
+          return EFI_SUCCESS;
+        }
+        InitrdEnd = fdt64_to_cpu (ReadUnaligned64 (Prop));
+        Blob->Size = InitrdEnd - InitrdStart;
+        break;
+      case 'c':
+        DEBUG((DEBUG_INFO, "-------- %a: before get bootargs ----------\n", __FUNCTION__));
+        Prop = fdt_getprop (DeviceTreeBase, ChosenNode, "bootargs", &Len);
+        if ((Prop == NULL) || (Len < 0)) {
+          return EFI_SUCCESS;
+        }
+        Blob->Data = (UINT8 *) Prop;
+        Blob->Size = Len;
+        DEBUG((DEBUG_INFO, "-------- %a: bootargs size is %d ----------\n", __FUNCTION__, Blob->Size));
+        break;
+      default:
+        return EFI_SUCCESS;
+    }
+/*    Type = fdt_getprop (DeviceTreeBase, Node, "compatible", &Len);
+    if (Type && (AsciiStrnCmp (Type, "arm,kernel", Len) == 0)) {
+      RegProp = fdt_getprop (DeviceTreeBase, Node, "reg", &Len);
+      if ((RegProp != 0) && (Len == (2 * sizeof (UINT64)))) {
+        Blob->Data = (UINT8 *) fdt64_to_cpu (ReadUnaligned64 (RegProp));
+        Blob->Size = fdt64_to_cpu (ReadUnaligned64 (RegProp + 1));
+
+        DEBUG ((
+          DEBUG_INFO,
+          "%a: Kernel image found: Base: 0x%lx, Size: 0x%lx\n",
+          __FUNCTION__,
+          Blob->Data,
+          Blob->Size
+          ));
+      }
+    }
+  }
+*/
 
   return EFI_SUCCESS;
 }
+
 //
 // The entry point of the feature.
 //
@@ -1076,13 +1169,14 @@ QemuKernelLoaderFsDxeEntrypoint (
   // Fetch all blobs.
   //
   for (BlobType = 0; BlobType < KernelBlobTypeMax; ++BlobType) {
-    if (BlobType != KernelBlobTypeKernel) continue;
+//    if (BlobType != KernelBlobTypeKernel) continue;
     CurrentBlob = &mKernelBlob[BlobType];
     Status      = FetchKernelBlob (CurrentBlob);
+    DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: after FetchKernelBlob ----------\n"));
     if (EFI_ERROR (Status)) {
       goto FreeBlobs;
     }
-
+    DEBUG((DEBUG_INFO, "--------- QemuKernelLoaderFsDxeEntrypoint: before VerifyBlob ----------\n"));
     Status = VerifyBlob (
                CurrentBlob->Name,
                CurrentBlob->Data,
